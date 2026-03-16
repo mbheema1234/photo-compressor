@@ -11,33 +11,60 @@ export async function POST(req: NextRequest) {
     const format = (formData.get("format")?.toString() ?? "jpeg").toLowerCase();
 
     if (!file) {
-      return new Response("No file uploaded", { status: 400 });
+      return new Response("No file uploaded in form field 'file'", { status: 400 });
+    }
+
+    console.log("Uploaded file info:", {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      requestedFormat: format,
+      qualityRaw,
+    });
+
+    const allowedInputTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp",
+      "image/jpg",
+      "image/heic",
+      "image/heif",
+    ];
+
+    if (!allowedInputTypes.includes(file.type)) {
+      return new Response(`Unsupported input type: ${file.type}`, { status: 400 });
+    }
+
+    if (!["jpeg", "jpg", "png", "webp"].includes(format)) {
+      return new Response(`Unsupported output format: ${format}`, { status: 400 });
     }
 
     const inputBuffer = Buffer.from(await file.arrayBuffer());
     const quality = Math.max(1, Math.min(100, Number(qualityRaw) || 72));
+
+    let pipeline = sharp(inputBuffer).rotate();
 
     let outputBuffer: Buffer;
     let contentType = "image/jpeg";
     let ext = "jpg";
 
     if (format === "webp") {
-      outputBuffer = await sharp(inputBuffer)
-        .rotate()
+      outputBuffer = await pipeline
+        .resize({ width: 2048, withoutEnlargement: true })
         .webp({ quality })
         .toBuffer();
       contentType = "image/webp";
       ext = "webp";
     } else if (format === "png") {
-      outputBuffer = await sharp(inputBuffer)
-        .rotate()
+      outputBuffer = await pipeline
+        .resize({ width: 2048, withoutEnlargement: true })
         .png({ compressionLevel: 9 })
         .toBuffer();
       contentType = "image/png";
       ext = "png";
     } else {
-      outputBuffer = await sharp(inputBuffer)
-        .rotate()
+      outputBuffer = await pipeline
+        .resize({ width: 2048, withoutEnlargement: true })
         .jpeg({ quality, mozjpeg: true })
         .toBuffer();
       contentType = "image/jpeg";
@@ -57,11 +84,11 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-  console.error("Compression route error:", error);
+    console.error("Compression route error:", error);
 
-  const message =
-    error instanceof Error ? error.message : "Unknown server error";
+    const message =
+      error instanceof Error ? error.message : "Unknown server error";
 
-  return new Response(`Compression failed: ${message}`, { status: 500 });
-}
+    return new Response(`Compression failed: ${message}`, { status: 500 });
+  }
 }
