@@ -57,7 +57,11 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error(error);
-    return new Response("Compression failed", { status: 500 });
-  }
+  console.error("Compression route error:", error);
+
+  const message =
+    error instanceof Error ? error.message : "Unknown server error";
+
+  return new Response(`Compression failed: ${message}`, { status: 500 });
+}
 }
