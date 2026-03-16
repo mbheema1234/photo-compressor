@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const originalName = file.name?.replace(/\.[^.]+$/, "") || "compressed";
     const filename = `${originalName}-compressed.${ext}`;
 
-    return new Response(outputBuffer, {
+    return new Response(new Uint8Array(outputBuffer), {
       status: 200,
       headers: {
         "Content-Type": contentType,
