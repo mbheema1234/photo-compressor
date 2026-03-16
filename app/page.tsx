@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function Home() {
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [quality, setQuality] = useState(72);
   const [format, setFormat] = useState("jpeg");
@@ -50,9 +51,18 @@ export default function Home() {
     <main style={{ maxWidth: 640, margin: "40px auto", fontFamily: "sans-serif" }}>
       <h1>Photo Compressor</h1>
 
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        style={{ padding: "10px 16px" }}
+      >
+        {file ? `Change file (${file.name})` : "Select a file"}
+      </button>
       <input
         type="file"
         accept="image/*"
+        ref={fileInputRef}
+        style={{ display: "none" }}
         onChange={(e) => setFile(e.target.files?.[0] || null)}
       />
 
